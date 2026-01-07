@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Confidence Interval Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --blue:#2563eb;
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:var(--bg);
+  color:#111827;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:16px;
+}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+  padding:18px;
+  margin-bottom:16px;
+}
+h1{
+  margin:0;
+  color:var(--blue);
+}
+.subtitle{
+  color:var(--muted);
+  margin-top:6px;
+}
+label{
+  font-weight:600;
+  font-size:14px;
+}
+textarea,input,select{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  margin-bottom:14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--blue);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+button.secondary{
+  background:#eef2ff;
+  color:#111;
+  margin-top:10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+}
+.result-box{
+  background:#f9fafb;
+  border-radius:10px;
+  padding:14px;
+}
+.step{
+  background:#f3f4f6;
+  border-radius:8px;
+  padding:10px;
+  margin-bottom:8px;
+}
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  background:#e0e7ff;
+  color:#1e3a8a;
+  border-radius:999px;
+  font-size:12px;
+  margin-bottom:6px;
+}
+.warn{
+  background:#fff4e5;
+  color:#92400e;
+  padding:10px;
+  border-radius:8px;
+}
+.error{
+  color:#dc2626;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- INPUT -->
+<div class="card">
+<h1>Confidence Interval Calculator</h1>
+<p class="subtitle">Accurate statistics • Sample & population • Explain like a teacher</p>
+
+<label>Data set (comma, space or line separated)</label>
+<textarea id="data">20, 45, 35, 60</textarea>
+
+<label>Confidence Level</label>
+<select id="confidence">
+  <option value="0.90">90%</option>
+  <option value="0.95" selected>95%</option>
+  <option value="0.99">99%</option>
+</select>
+
+<label>
+  <input type="checkbox" id="teach" checked>
+  Explain like a teacher
+</label>
+
+<button onclick="calculateCI()">Calculate Confidence Interval</button>
+<button class="secondary" onclick="resetAll()">Reset</button>
+</div>
+
+<!-- OUTPUT -->
+<div class="grid">
+<div class="card">
+<h3>Results</h3>
+<div id="result" class="result-box"></div>
+</div>
+
+<div class="card">
+<h3>Step-by-Step</h3>
+<div id="steps"></div>
+</div>
+</div>
+
+</div>
+
+<script>
+function parseData(){
+  return document.getElementById("data").value
+    .split(/[\s,]+/)
+    .map(Number)
+    .filter(v=>!isNaN(v));
+}
+
+// Z values for common confidence levels
+function zValue(conf){
+  if(conf===0.90) return 1.645;
+  if(conf===0.95) return 1.96;
+  if(conf===0.99) return 2.576;
+  return 1.96;
+}
+
+function calculateCI(){
+  const data=parseData();
+  const conf=parseFloat(document.getElementById("confidence").value);
+  const teach=document.getElementById("teach").checked;
+
+  const resultBox=document.getElementById("result");
+  const stepsBox=document.getElementById("steps");
+  resultBox.innerHTML="";
+  stepsBox.innerHTML="";
+
+  if(data.length<2){
+    resultBox.innerHTML="<span class='error'>Please enter at least two values.</span>";
+    return;
+  }
+
+  const n=data.length;
+  const mean=data.reduce((a,b)=>a+b,0)/n;
+  const variance=data.reduce((s,x)=>s+(x-mean)**2,0)/(n-1);
+  const std=Math.sqrt(variance);
+
+  const z=zValue(conf);
+  const margin=z*(std/Math.sqrt(n));
+
+  const lower=mean-margin;
+  const upper=mean+margin;
+
+  resultBox.innerHTML=`
+    <span class="badge">Final Answer</span><br>
+    <strong>${(conf*100).toFixed(0)}% Confidence Interval</strong><br><br>
+    Mean = ${mean.toFixed(6)}<br>
+    Lower Bound = ${lower.toFixed(6)}<br>
+    Upper Bound = ${upper.toFixed(6)}
+  `;
+
+  if(teach){
+    stepsBox.innerHTML+=`
+      <div class="step">We calculate the sample mean of the data.</div>
+      <div class="step">Next, we compute the sample standard deviation.</div>
+      <div class="step">We select the Z-score for ${(conf*100).toFixed(0)}% confidence.</div>
+      <div class="step">Margin of error = Z × (s / √n).</div>
+      <div class="step">Confidence interval = mean ± margin of error.</div>
+    `;
+  }
+}
+
+function resetAll(){
+  document.getElementById("data").value="";
+  document.getElementById("result").innerHTML="";
+  document.getElementById("steps").innerHTML="";
+}
+</script>
+
+</body>
+</html>
